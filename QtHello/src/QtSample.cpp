@@ -15,6 +15,10 @@
 #include <QVBoxLayout>
 #include <cstdint> // for uint32_t
 #include <QObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QUrl>
 
 void StartCmdLine(int* out_argc, std::vector<char*>* out_argv);
 
@@ -68,6 +72,23 @@ int main(int argc, char* argv[])
         });
 
     window.show();
+
+    QNetworkAccessManager manager;
+
+    QObject::connect(&manager, &QNetworkAccessManager::finished,
+        [&](QNetworkReply* reply) {
+            if (reply->error() == QNetworkReply::NoError) {
+                QByteArray data = reply->readAll();
+                qDebug() << "Response:" << data;
+            }
+            else {
+                qDebug() << "Error:" << reply->errorString();
+            }
+            reply->deleteLater();
+        });
+
+    QNetworkRequest request(QUrl("http://127.0.0.1:3000/sample"));
+    manager.get(request);
 
     // Manual event loop
     while (running) {
